@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: Revolute Test Payment Gateway
+ * Plugin Name: Revolut Test Payment Gateway
  * Plugin URI: https://sample-url.com/payment-gateway-plugin.html
  * Description: This payment method allows customer to pay through predefined vouchers
  * Author: Ismayil Musayev
@@ -8,27 +8,30 @@
  * Version: 1.0.0
  */
 
+if (!defined('VOUCHER_PLUGIN_DIR')) {
+    define( 'VOUCHER_PLUGIN_DIR', dirname(__FILE__).'/' );
+}
 
-add_action( 'plugins_loaded', 'revolute_test_init_gateway_class' );
+add_action( 'plugins_loaded', 'revolut_test_init_gateway_class' );
 
-function revolute_test_init_gateway_class() {
+function revolut_test_init_gateway_class() {
 
     //check if the woocommerce environment loadded properly
     if (!class_exists( 'WC_Payment_Gateway' ) ) {
         return;
     }
 
-    require_once(plugin_basename( 'includes/wc_revolute_test_paymentgateway.php' ) );
+    require_once(plugin_basename( 'includes/wc_revolut_test_paymentgateway.php' ) );
 
-    add_filter( 'woocommerce_payment_gateways', 'revolute_test_add_gateway_class' );
+    add_filter( 'woocommerce_payment_gateways', 'revolut_test_add_gateway_class' );
 }
 
 
 /*
  * This action hook registers our PHP class as a WooCommerce payment gateway
  */
-function revolute_test_add_gateway_class( $gateways ) {
-    $gateways[] = 'WC_Revolute_Test_Payment_Gateway';
+function revolut_test_add_gateway_class( $gateways ) {
+    $gateways[] = 'WC_Revolut_Test_Payment_Gateway';
     return $gateways;
 }
 
@@ -36,15 +39,15 @@ function revolute_test_add_gateway_class( $gateways ) {
 /**
  * Create table to save vouchers
  */
-register_activation_hook( __FILE__, 'revolute_test_create_tables' );
+register_activation_hook( __FILE__, 'revolut_test_create_tables' );
 
 /**
  * create table and init default vouchers on plugin activation
 */
-function revolute_test_create_tables() {
+function revolut_test_create_tables() {
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
-    $table_name      = $wpdb->prefix . 'wc_revolute_test_predefined_vouchers';
+    $table_name      = $wpdb->prefix . 'wc_revolut_test_predefined_vouchers';
 
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
 		voucher_id int(11) NOT NULL AUTO_INCREMENT,
@@ -56,7 +59,7 @@ function revolute_test_create_tables() {
 	) $charset_collate;";
 
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-    require_once(plugin_basename( 'includes/wc_revolute_test_paymentgateway.php' ) );
+    require_once(VOUCHER_PLUGIN_DIR . '/src/VoucherPayment.php');
     dbDelta( $sql );
 
     $def_currency = get_woocommerce_currency();
@@ -85,7 +88,8 @@ function revolute_test_create_tables() {
         ),
     );
 
-    WC_Revolute_Test_Payment_Gateway::save_vouchers_db($defaultVouchers);
+    $voucherPayment = new VoucherPayment();
+    $voucherPayment->saveVouchers($defaultVouchers);
 }
 
 
