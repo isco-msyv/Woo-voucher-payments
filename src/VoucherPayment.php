@@ -3,6 +3,12 @@
 class VoucherPayment
 {
     public $voucher_code;
+    public $fake_data;
+
+    public function __construct($fake_data = false)
+    {
+        $this->fake_data = $fake_data;
+    }
 
     public function setVoucherCode($voucher_code)
     {
@@ -52,8 +58,47 @@ class VoucherPayment
         $wpdb->query('TRUNCATE TABLE ' . $table_name);
     }
 
+    public function getSampleVouchers(){
+        return array(
+            array(
+                'voucher_string'=> 'bd28808c-380a-4274-bde1-b1ce31258ea1',
+                'voucher_price'=> 5,
+                'voucher_currency'=> 'USD',
+                'voucher_is_full_price'=> 0,
+            ),array(
+                'voucher_string'=> 'db15f80e-2f65-4794-aeb8-7a03d225eb53',
+                'voucher_price'=> 10,
+                'voucher_currency'=> 'USD',
+                'voucher_is_full_price'=> 0,
+            ),array(
+                'voucher_string'=> '8c086291-f90c-4208-892a-c77f9d9446ea',
+                'voucher_price'=> 50,
+                'voucher_currency'=> 'USD',
+                'voucher_is_full_price'=> 0,
+            ),array(
+                'voucher_string'=> '23ca0e77-49d5-47fb-ae67-d1809f995198',
+                'voucher_price'=> 0,
+                'voucher_currency'=> 'USD',
+                'voucher_is_full_price'=> 1,
+            )
+        );
+    }
+
+    public function getSampleVaucher($voucher_code){
+        $sample_vauchers = $this->getSampleVouchers();
+        foreach ($sample_vauchers as $sample_vaucher){
+            if($sample_vaucher['voucher_string'] == $voucher_code){
+                return json_decode(json_encode($sample_vaucher));
+            }
+        }
+    }
+
     public function getVouchers()
     {
+        if($this->fake_data){
+            return $this->getSampleVouchers();
+        }
+
         global $wpdb;
         $table_name = $wpdb->prefix . 'wc_revolut_test_predefined_vouchers';
         $res = $wpdb->get_results('SELECT * FROM ' . $table_name);
@@ -62,6 +107,10 @@ class VoucherPayment
 
     public function getVoucherByCode($voucher_code)
     {
+        if($this->fake_data){
+            return [$this->getSampleVaucher($voucher_code)];
+        }
+
         global $wpdb;
         $table_name = $wpdb->prefix . 'wc_revolut_test_predefined_vouchers';
         $query = 'SELECT * FROM ' . $table_name . ' WHERE voucher_string = "' . $wpdb->esc_like($voucher_code) . '"';
